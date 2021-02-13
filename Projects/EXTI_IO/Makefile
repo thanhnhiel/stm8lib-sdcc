@@ -14,8 +14,8 @@ LIBSRCDIR   = $(LIBDIR)/src
 #ASRCS   := $(wildcard *.s $(LIBSRCDIR)/*.s)
 
 LIBSRCS := \
-    $(LIBDIR)/src/stm8l15x_gpio.c \
-    $(LIBDIR)/src/stm8l15x_exti.c
+    $(LIBDIR)/src/stm8l15x_gpio.c
+#    $(LIBDIR)/src/stm8l15x_exti.c
     
 LIBOBJS := $(LIBSRCS:$(LIBSRCDIR)/%.c=build/%.rel)
 

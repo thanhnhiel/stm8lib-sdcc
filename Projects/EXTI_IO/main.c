@@ -61,7 +61,10 @@ void main(void)
   GPIO_Init(GPIOC, GPIO_Pin_4, GPIO_Mode_Out_PP_Low_Fast);
   
   GPIO_Init(GPIOB, GPIO_Pin_1, GPIO_Mode_In_PU_IT);
-  EXTI_SetPinSensitivity(EXTI_Pin_1, EXTI_Trigger_Falling);
+
+  //EXTI_SetPinSensitivity(EXTI_Pin_1, EXTI_Trigger_Falling);
+  EXTI->CR1 &=  (uint8_t)(~EXTI_CR1_P1IS);
+  EXTI->CR1 |= (uint8_t)((uint8_t)(EXTI_Trigger_Falling) << EXTI_Pin_1);
   enableInterrupts();
 
   while (1)
@@ -87,7 +90,8 @@ INTERRUPT_HANDLER(EXTI1_IRQHandler, 9)
   /* Joystick UP button is pressed */
   pressed = 1;
   /* Cleat Interrupt pending bit */
-  EXTI_ClearITPendingBit(EXTI_IT_Pin1);
+  //EXTI_ClearITPendingBit(EXTI_IT_Pin1);
+  EXTI->SR1 = (uint8_t) (EXTI_IT_Pin1);
 }
 
 /**
