@@ -45,19 +45,6 @@
 /* Private functions ---------------------------------------------------------*/
 /* Public functions ----------------------------------------------------------*/
 
-#ifdef _COSMIC_
-/**
-  * @brief Dummy interrupt routine
-  * @param  None
-  * @retval None
-  */
-INTERRUPT_HANDLER(NonHandledInterrupt, 0)
-{
-  /* In order to detect unexpected events during development,
-     it is recommended to set a breakpoint on the following instruction.
-  */
-}
-#endif
 
 /**
   * @brief TRAP interrupt routine
@@ -70,6 +57,7 @@ INTERRUPT_HANDLER_TRAP(TRAP_IRQHandler)
      it is recommended to set a breakpoint on the following instruction.
   */
 }
+
 /**
   * @brief FLASH Interrupt routine.
   * @param  None

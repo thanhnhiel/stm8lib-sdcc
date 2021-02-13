@@ -88,6 +88,11 @@
  #define _RAISONANCE_
 #elif defined(__ICCSTM8__)
  #define _IAR_
+#elif defined(__SDCC)                    /* SDCC patch: add compiler key */
+ #define _SDCC_
+ #define SDCC_VERSION (__SDCC_VERSION_MAJOR * 10000 \
+                     + __SDCC_VERSION_MINOR * 100 \
+                     + __SDCC_VERSION_PATCH)
 #else
  #error "Unsupported Compiler!"          /* Compiler defines not found */
 #endif
@@ -147,6 +152,12 @@
    /*!< Used with memory Models for code higher than 64K */
   #define MEMCPY fmemcpy
  #endif /* STM8L15X_MD or STM8L15X_MDP or STM8L05X_MD_VL or STM8AL31_L_MD*/ 
+#elif defined(_SDCC_)                    /* SDCC patch: mostly not required / not supported */
+ #define FAR
+ #define NEAR
+ #define TINY
+ #define EEPROM
+ #define CONST  const
 #else /*_IAR_*/
  #define FAR  __far
  #define NEAR __near
@@ -165,10 +176,12 @@ defined (STM8L05X_LD_VL) || defined (STM8L05X_MD_VL) || defined (STM8AL31_L_MD)
 /*!< Used with memory Models for code smaller than 64K */
  #define PointerAttr NEAR
  #define MemoryAddressCast uint16_t
+ #undef _SDCC_BIGMEM_                    /* SDCC patch: simplify sdcc && >64kB indicator over different SPLs */
 #elif defined (STM8L15X_HD) || defined (STM8L05X_HD_VL)
 /*!< Used with memory Models for code higher than 64K */
  #define PointerAttr FAR
  #define MemoryAddressCast uint32_t
+ #define _SDCC_BIGMEM_                   /* SDCC patch: simplify sdcc && >64kB indicator over different SPLs */
 #endif /* STM8L15X_MD or STM8L15X_MDP or STM8L15X_LD or STM8L05X_LD_VL or STM8L05X_MD_VL
           or STM8AL31_L_MD */
 
@@ -182,6 +195,8 @@ defined (STM8L05X_LD_VL) || defined (STM8L05X_MD_VL) || defined (STM8AL31_L_MD)
    #define IN_RAM(a) a
  #elif defined (_RAISONANCE_) /* __RCSTM8__ */
    #define IN_RAM(a) a inram
+ #elif defined(_SDCC_)                    /* SDCC patch: code in RAM not yet patched */
+  #error RAM execution not yet implemented in patch, comment RAM_EXECUTION in stm8s.h
  #else /*_IAR_*/
   #define IN_RAM(a) __ramfunc a
  #endif /* _COSMIC_ */
@@ -218,6 +233,9 @@ defined (STM8L05X_LD_VL) || defined (STM8L05X_MD_VL) || defined (STM8AL31_L_MD)
 #define     __O     volatile         /*!< defines 'write only' permissions    */
 #define     __IO    volatile         /*!< defines 'read / write' permissions  */
 
+#ifdef USE_STDINT
+#include <stdint.h>
+#else
 /*!< Signed integer types  */
 typedef   signed char     int8_t;
 typedef   signed short    int16_t;
@@ -227,6 +245,7 @@ typedef   signed long     int32_t;
 typedef unsigned char     uint8_t;
 typedef unsigned short    uint16_t;
 typedef unsigned long     uint32_t;
+#endif
 
 /*!< STM8Lx Standard Peripheral Library old types (maintained for legacy purpose) */
 
@@ -238,8 +257,13 @@ typedef uint32_t  u32;
 typedef uint16_t u16;
 typedef uint8_t  u8;
 
-
+/* SDCC patch: SDCC defines a special Bool type, use that if available */
+#ifdef __bool_true_false_are_defined
+ #define TRUE true
+ #define FALSE false
+#else
 typedef enum {FALSE = 0, TRUE = !FALSE} bool;
+#endif
 
 typedef enum {RESET = 0, SET = !RESET} FlagStatus, ITStatus, BitStatus, BitAction;
 
@@ -2920,6 +2944,16 @@ AES_TypeDef;
  #define wfi() {_asm("wfi\n");} /*!<Wait For Interrupt */
  #define wfe() {_asm("wfe\n");} /*!<Wait for event */
  #define halt() {_asm("halt\n");} /*!<Halt */
+#elif defined(_SDCC_)                    /* SDCC patch: standard inline asm macros */
+ #define enableInterrupts()    __asm__("rim")    /* enable interrupts */
+ #define disableInterrupts()   __asm__("sim")    /* disable interrupts */
+ #define rim()                 __asm__("rim")    /* enable interrupts */
+ #define sim()                 __asm__("sim")    /* disable interrupts */
+ #define nop()                 __asm__("nop")    /* no operation */
+ #define trap()                __asm__("trap")   /* trap (soft IT) */
+ #define wfi()                 __asm__("wfi")    /* wait for interrupt */
+ #define wfe()                 __asm__("wfe")    /* wait for event */
+ #define halt()                __asm__("halt")   /* halt CPU */
 #else /*_IAR*/
  #include <intrinsics.h>
  #define enableInterrupts()    __enable_interrupt()   /* enable interrupts */
@@ -2956,11 +2990,28 @@ AES_TypeDef;
  __interrupt void (a) (void)  
 #endif /* _IAR_ */
 
+/* SDCC patch: declare ISR handlers */
+#ifdef _SDCC_
+ #define INTERRUPT_HANDLER(a,b) void a() __interrupt(b)
+
+ /* traps require >=v3.4.3 -> else warn and skip */
+ #if SDCC_VERSION >= 30403
+   #define INTERRUPT_HANDLER_TRAP(a) void a() __trap 
+ #else
+   #warning traps require SDCC>=v3.4.3. Update if required
+   #define INTERRUPT_HANDLER_TRAP(a) void a()
+ #endif 
+
+#endif /* _SDCC_ */
+
 /*============================== Interrupt Handler declaration ========================*/
 #ifdef _COSMIC_
  #define INTERRUPT @far @interrupt
 #elif defined(_IAR_)
  #define INTERRUPT __interrupt
+#elif defined(_SDCC_)                    /* SDCC patch: doesn't work like that in SDCC -> skip */
+  #define INTERRUPT __interrupt
+//  #include "stm8l_it.h"                  /* SDCC patch: ensure inclusion in main.c for interrupts */
 #endif /* _COSMIC_ */
  
 /*============================== Handling bits ====================================*/

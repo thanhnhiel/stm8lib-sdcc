@@ -39,15 +39,7 @@
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* define the GPIO port and pins connected to Leds mounted on STM8L152X-EVAL board */
-#ifdef USE_STM8L1526_EVAL
-#define LED_GPIO_PORT  GPIOA
-#define LED_GPIO_PINS  GPIO_Pin_4 | GPIO_Pin_5 | GPIO_Pin_6 | GPIO_Pin_7
-#elif defined USE_STM8L1528_EVAL
-#define LED_GPIO_PORT  GPIOH
-#define LED_GPIO_PINS  GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2 | GPIO_Pin_3
-#else
-#error "Please select first the STM8L15X_EVAL board to be used "
-#endif
+
 
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
@@ -63,12 +55,13 @@ void Delay (uint16_t nCount);
 void main(void)
 {
   /* Initialize LEDs mounted on STM8L152X-EVAL board */
-  GPIO_Init(LED_GPIO_PORT, LED_GPIO_PINS, GPIO_Mode_Out_PP_Low_Fast);
-
+  GPIO_Init(GPIOB, GPIO_Pin_1, GPIO_Mode_Out_PP_Low_Fast);
+  
   while (1)
   {
     /* Toggle LEDs LD1..LD4 */
-    GPIO_ToggleBits(LED_GPIO_PORT, LED_GPIO_PINS);
+    GPIO_ToggleBits(GPIOB, GPIO_Pin_1);
+
     Delay(0xFFFF);
   }
 }
