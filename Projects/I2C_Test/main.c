@@ -50,7 +50,20 @@ INTERRUPT_HANDLER(EXTI1_IRQHandler, 9);
 __IO uint8_t pressed = 0;
 
 /* Private functions ---------------------------------------------------------*/
+/**
+  * @brief  Initializes the LM75_I2C..
+  * @param  None
+  * @retval None
+  */
+void I2C_LowLevel_Init(void)
+{
+    //CLK_PeripheralClockConfig(CLK_Peripheral_I2C1, ENABLE);
+    CLK->PCKENR1 |= (uint8_t)(1 << 0x03);
+    
+  /* Configure PC.4 as Input pull-up, used as TemperatureSensor_INT */
+ // GPIO_Init(GPIOC, LM75_I2C_SMBUSALERT_PIN, GPIO_Mode_In_FL_No_IT);
 
+}
 
 /**
   * @brief  Main program.
