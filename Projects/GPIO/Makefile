@@ -7,7 +7,7 @@ DEVICE = STM8L05X_LD_VL
 F_CPU   ?= 2000000
 TARGET  ?= build/main.ihx
 
-LIBDIR   = ../STM8L15x_StdPeriph_Driver
+LIBDIR   = ../../STM8L15x_StdPeriph_Driver
 LIBSRCDIR   = $(LIBDIR)/src
 
 #SRCS    := $(wildcard *.c $(LIBSRCDIR)/*.c)
