@@ -43,14 +43,14 @@
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
+#define FREG 2000000
 /* Private variables ---------------------------------------------------------*/
 /* Private function prototypes -----------------------------------------------*/
 
-#define PUTCHAR_PROTOTYPE int putchar (int c)
-#define GETCHAR_PROTOTYPE int getchar (void)
-
 /* Private functions ---------------------------------------------------------*/
 void STM_COMInit();
+void uart1_init(uint32_t BaudRate);
+
 void Delay(__IO uint16_t nCount)
 {
   /* Decrement nCount value */
@@ -67,15 +67,12 @@ void Delay(__IO uint16_t nCount)
   */
 void main(void)
 {
-  char ans;
   /*High speed internal clock prescaler: 1*/
-  CLK_SYSCLKDivConfig(CLK_SYSCLKDiv_1);
-
-    /* Enable USART clock */
-  CLK_PeripheralClockConfig(CLK_Peripheral_USART1, ENABLE);
+  //CLK_SYSCLKDivConfig(CLK_SYSCLKDiv_1);   
+  CLK->CKDIVR = (uint8_t)(CLK_SYSCLKDiv_8);
 
 
-  /* EVAL COM (USARTx) configuration -----------------------------------------*/
+  /* EVAL COM (USART1) configuration -----------------------------------------*/
   /* USART configured as follow:
         - BaudRate = 115200 baud  
         - Word Length = 8 Bits
@@ -91,9 +88,11 @@ void main(void)
   printf("\n\rEnter Text\n\r");
 
 uint8_t counter = 0;
+uint32_t clockFreg = FREG; //CLK_GetClockFreq();
+
   while (1)
   {
-            printf("Test, %d\r\n", counter++);
+            printf("Test, %d freg: %ld\r\n", counter++, clockFreg);
             //delay_ms(500);
             Delay(0xFFFF);
             Delay(0xFFFF);
@@ -110,21 +109,64 @@ void STM_COMInit()
     SYSCFG->RMPCR1 |= (uint8_t)((uint16_t)0x011C & (uint16_t)0x00F0);
 
   /* Enable USART clock */
-  CLK_PeripheralClockConfig(CLK_Peripheral_USART1, ENABLE);
+  //CLK_PeripheralClockConfig(CLK_Peripheral_USART1, ENABLE);
+    /* Enable the peripheral Clock */
+    CLK->PCKENR1 |= (uint8_t)((uint8_t)1 << CLK_Peripheral_USART1);
 
   /* Configure USART Tx as alternate function push-pull  (software pull up)*/
   GPIO_ExternalPullUpConfig(GPIOA, GPIO_Pin_3, ENABLE);
+  //GPIOA->CR1 |= GPIO_Pin_3;
+
   /* Configure USART Rx as alternate function push-pull  (software pull up)*/
   GPIO_ExternalPullUpConfig(GPIOA, GPIO_Pin_2, ENABLE);
+  //GPIOA->CR1 |= GPIO_Pin_2;
 
   /* USART configuration */
-  USART_Init(USART1, 115200,
-             USART_WordLength_8b,
-             USART_StopBits_1,
-             USART_Parity_No,
-             (USART_Mode_TypeDef)(USART_Mode_Tx | USART_Mode_Rx));
+  uart1_init(115200);
+  // USART_Init(USART1, 115200,
+  //            USART_WordLength_8b,
+  //            USART_StopBits_1,
+  //            USART_Parity_No,
+  //            (USART_Mode_TypeDef)(USART_Mode_Tx | USART_Mode_Rx));
 }
 
+void uart1_init(uint32_t BaudRate)
+{
+  uint32_t BaudRate_Mantissa = 0;
+
+  /* Clear the word length and Parity Control bits */
+  USART1->CR1 &= (uint8_t)(~(USART_CR1_PCEN | USART_CR1_PS | USART_CR1_M));
+  /* Set the word length bit according to USART_WordLength value */
+  /* Set the Parity Control bit to USART_Parity value */
+  USART1->CR1 |= (uint8_t)((uint8_t)USART_WordLength_8b | (uint8_t)USART_Parity_No);
+
+  /* Clear the STOP bits */
+  USART1->CR3 &= (uint8_t)(~USART_CR3_STOP);
+  /* Set the STOP bits number according to USART_StopBits value */
+  USART1->CR3 |= (uint8_t)USART_StopBits_1;
+
+  /* Clear the LSB mantissa of USARTDIV */
+  USART1->BRR1 &= (uint8_t)(~USART_BRR1_DIVM);
+  /* Clear the MSB mantissa of USARTDIV */
+  USART1->BRR2 &= (uint8_t)(~USART_BRR2_DIVM);
+  /* Clear the Fraction bits of USARTDIV */
+  USART1->BRR2 &= (uint8_t)(~USART_BRR2_DIVF);
+
+  //BaudRate_Mantissa  = (uint32_t)(CLK_GetClockFreq() / BaudRate );
+  BaudRate_Mantissa  = (uint32_t)(FREG / BaudRate );
+
+  /* Set the fraction of USARTDIV */
+  USART1->BRR2 = (uint8_t)((BaudRate_Mantissa >> (uint8_t)8) & (uint8_t)0xF0);
+  /* Set the MSB mantissa of USARTDIV */
+  USART1->BRR2 |= (uint8_t)(BaudRate_Mantissa & (uint8_t)0x0F);
+  /* Set the LSB mantissa of USARTDIV */
+  USART1->BRR1 = (uint8_t)(BaudRate_Mantissa >> (uint8_t)4);
+
+  /* Disable the Transmitter and Receiver */
+  USART1->CR2 &= (uint8_t)~(USART_CR2_TEN | USART_CR2_REN);
+  /* Set TEN and REN bits according to USART_Mode value */
+  USART1->CR2 |= (uint8_t)(USART_Mode_Tx | USART_Mode_Rx);
+}
 /**
   * @brief Retargets the C library printf function to the USART.
   * @param[in] c Character to send
@@ -132,12 +174,13 @@ void STM_COMInit()
   * @par Required preconditions:
   * - None
   */
-PUTCHAR_PROTOTYPE
+int putchar (int c)
 {
   /* Write a character to the USART */
-  USART_SendData8(USART1, c);
+  USART1->DR = c;
+  //USART_SendData8(USART1, c);
   /* Loop until the end of transmission */
-  while (USART_GetFlagStatus(USART1, USART_FLAG_TC) == RESET);
+  while ((USART1->SR & (uint8_t)USART_FLAG_TC) == 0);
 
   return (c);
 }
@@ -148,14 +191,14 @@ PUTCHAR_PROTOTYPE
   * @par Required preconditions:
   * - None
   */
-GETCHAR_PROTOTYPE
+int getchar (void)
 {
-  int c = 0;
-  /* Loop until the Read data register flag is SET */
-  while (USART_GetFlagStatus(USART1, USART_FLAG_RXNE) == RESET);
-    c = USART_ReceiveData8(USART1);
+    int c = 0;
+    /* Loop until the Read data register flag is SET */
+    while ((USART1->SR & (uint8_t)USART_FLAG_RXNE) == 0);
+    c = USART1->DR;
     return (c);
-  }
+}
 
 #ifdef  USE_FULL_ASSERT
   /**

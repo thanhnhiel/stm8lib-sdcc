@@ -15,10 +15,10 @@ LIBSRC2DIR   = ../../lib
 #ASRCS   := $(wildcard *.s $(LIBSRCDIR)/*.s)
 
 LIBSRCS := \
-    $(LIBDIR)/src/stm8l15x_gpio.c \
-    $(LIBDIR)/src/stm8l15x_clk.c \
-    $(LIBDIR)/src/stm8l15x_usart.c
-    
+    $(LIBDIR)/src/stm8l15x_gpio.c
+#    $(LIBDIR)/src/stm8l15x_usart.c \
+ #   $(LIBDIR)/src/stm8l15x_clk.c 
+
 LIBOBJS := $(LIBSRCS:$(LIBSRCDIR)/%.c=build/%.rel)
 
 LIB2SRCS := \
