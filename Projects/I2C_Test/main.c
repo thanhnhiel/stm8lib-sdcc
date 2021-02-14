@@ -27,7 +27,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm8l15x.h"
-#include "mpr121.h"
+//#include "mpr121.h"
 #include "uart.h"
 
 
@@ -49,6 +49,7 @@
 /* Private function prototypes -----------------------------------------------*/
 void I2C_LowLevel_Init(void);
 void UART_LowLevel_Init(void);
+void LM75_Init(void);
 
 void Delay (uint16_t nCount);
 INTERRUPT_HANDLER(EXTI1_IRQHandler, 9);
@@ -68,12 +69,12 @@ void main(void)
     //CLK_SYSCLKDivConfig(CLK_SYSCLKDiv_1);
     CLK->CKDIVR = (uint8_t)(CLK_SYSCLKDiv_8);
 
-    I2C_LowLevel_Init();
+    LM75_Init();
     UART_LowLevel_Init();
     uart_init();
 
-    I2C_init();
-    mpr121_setup();
+    //I2C_init();
+    //mpr121_setup();
     
     /* Initialize LEDs mounted on STM8L152X-EVAL board */
     GPIO_Init(GPIOC, GPIO_Pin_4, GPIO_Mode_Out_PP_Low_Fast);
@@ -112,7 +113,32 @@ void main(void)
 void I2C_LowLevel_Init(void)
 {
   /* Enable the peripheral Clock */
-  CLK->PCKENR1 |= (uint8_t)((uint8_t)1 << CLK_Peripheral_I2C1);
+  //CLK->PCKENR1 |= (uint8_t)((uint8_t)1 << CLK_Peripheral_I2C1);
+  CLK_PeripheralClockConfig(CLK_Peripheral_I2C1, ENABLE);
+
+  /* Configure SDA as alternate function push-pull  (software pull up)*/
+  GPIO_ExternalPullUpConfig(GPIOC, GPIO_Pin_0, ENABLE); // SCL
+  GPIO_ExternalPullUpConfig(GPIOC, GPIO_Pin_1, ENABLE); // SDA
+}
+
+#define LM75_I2C_SPEED      100000 /*!< I2C Speed */
+void LM75_Init(void)
+{
+
+  I2C_LowLevel_Init();
+
+  /* I2C DeInit */
+  I2C_DeInit(I2C1);
+
+  /* I2C configuration */
+  I2C_Init(I2C1, LM75_I2C_SPEED, 0x00, I2C_Mode_I2C,
+           I2C_DutyCycle_2, I2C_Ack_Enable, I2C_AcknowledgedAddress_7bit);
+
+  /*!< Enable SMBus Alert interrupt */
+  //I2C_ITConfig(I2C1, I2C_IT_ERR, ENABLE);
+
+  /*!< LM75_I2C Init */
+  I2C_Cmd(I2C1, ENABLE);
 }
 
 void UART_LowLevel_Init(void)

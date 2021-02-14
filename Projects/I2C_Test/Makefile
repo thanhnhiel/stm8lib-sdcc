@@ -15,20 +15,24 @@ LIBSRC2DIR   = ../../lib
 #ASRCS   := $(wildcard *.s $(LIBSRCDIR)/*.s)
 
 LIBSRCS := \
-    $(LIBDIR)/src/stm8l15x_gpio.c
-#    $(LIBDIR)/src/stm8l15x_exti.c
+    $(LIBDIR)/src/stm8l15x_gpio.c \
+    $(LIBDIR)/src/stm8l15x_clk.c \
+    $(LIBDIR)/src/stm8l15x_i2c.c
+
     
 LIBOBJS := $(LIBSRCS:$(LIBSRCDIR)/%.c=build/%.rel)
 
 LIB2SRCS := \
-    $(LIBSRC2DIR)/i2c.c \
-    $(LIBSRC2DIR)/mpr121.c \
     $(LIBSRC2DIR)/uart.c
+#    $(LIBSRC2DIR)/i2c.c \
+#    $(LIBSRC2DIR)/mpr121.c \
+
     
 LIB2OBJS := $(LIB2SRCS:$(LIBSRC2DIR)/%.c=build/%.rel)
 
 SRCS:= main.c
 
+#
 OBJS     = $(LIBOBJS) $(LIB2OBJS) $(SRCS:%.c=build/%.rel)
 
 CC       = sdcc
