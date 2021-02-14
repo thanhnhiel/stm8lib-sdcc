@@ -64,7 +64,7 @@ __IO uint8_t pressed = 0;
 void main(void)
 {
     uint8_t counter = 0;
-    
+
     //CLK_SYSCLKDivConfig(CLK_SYSCLKDiv_1);
     CLK->CKDIVR = (uint8_t)(CLK_SYSCLKDiv_8);
 
@@ -72,8 +72,8 @@ void main(void)
     UART_LowLevel_Init();
     uart_init();
 
-    //I2C_init();
-    //mpr121_setup();
+    I2C_init();
+    mpr121_setup();
     
     /* Initialize LEDs mounted on STM8L152X-EVAL board */
     GPIO_Init(GPIOC, GPIO_Pin_4, GPIO_Mode_Out_PP_Low_Fast);

@@ -11,6 +11,13 @@
 // #define _SFR_(mem_addr)       (*(volatile uint8_t *)(0x5000 | (mem_addr)))
 // #endif
 
+#ifndef F_CPU
+#warning "F_CPU not defined, using 2MHz by default"
+#define F_CPU 2000000UL
+#endif
+
+#define I2C_SPEED              100000
+
 /* I2C */
 #define I2C1_BASE_ADDRESS        (I2C1_BASE)
 #define I2C1_CR1                 _SFR_(I2C1_BASE_ADDRESS + 0x00)
