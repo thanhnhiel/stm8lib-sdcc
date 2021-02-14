@@ -28,6 +28,8 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stm8l15x.h"
 #include "mpr121.h"
+#include "uart.h"
+
 
 /** @addtogroup STM8L15x_StdPeriph_Examples
   * @{
@@ -45,21 +47,14 @@
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 /* Private function prototypes -----------------------------------------------*/
+void I2C_LowLevel_Init(void);
+void UART_LowLevel_Init(void);
+
 void Delay (uint16_t nCount);
 INTERRUPT_HANDLER(EXTI1_IRQHandler, 9);
 __IO uint8_t pressed = 0;
 
 /* Private functions ---------------------------------------------------------*/
-
-void I2C_LowLevel_Init(void)
-{
-    //CLK_PeripheralClockConfig(CLK_Peripheral_I2C1, ENABLE);
-    CLK->PCKENR1 |= (uint8_t)(1 << 0x03);
-    
-  /* Configure PC.4 as Input pull-up, used as TemperatureSensor_INT */
- // GPIO_Init(GPIOC, LM75_I2C_SMBUSALERT_PIN, GPIO_Mode_In_FL_No_IT);
-
-}
 
 /**
   * @brief  Main program.
@@ -68,9 +63,17 @@ void I2C_LowLevel_Init(void)
   */
 void main(void)
 {
+    uint8_t counter = 0;
+    
+    //CLK_SYSCLKDivConfig(CLK_SYSCLKDiv_1);
+    CLK->CKDIVR = (uint8_t)(CLK_SYSCLKDiv_8);
+
     I2C_LowLevel_Init();
-    I2C_init();
-    mpr121_setup();
+    UART_LowLevel_Init();
+    uart_init();
+
+    //I2C_init();
+    //mpr121_setup();
     
     /* Initialize LEDs mounted on STM8L152X-EVAL board */
     GPIO_Init(GPIOC, GPIO_Pin_4, GPIO_Mode_Out_PP_Low_Fast);
@@ -80,22 +83,56 @@ void main(void)
     //EXTI_SetPinSensitivity(EXTI_Pin_1, EXTI_Trigger_Falling);
     EXTI->CR1 &=  (uint8_t)(~EXTI_CR1_P1IS);
     EXTI->CR1 |= (uint8_t)((uint8_t)(EXTI_Trigger_Falling) << EXTI_Pin_1);
-    enableInterrupts();
+    //enableInterrupts();
     
     while (1)
     {
-        if (pressed == 1 || (GPIOB->IDR & GPIO_Pin_1)==0)
+        // if (pressed == 1 || (GPIOB->IDR & GPIO_Pin_1)==0)
+        // {
+            // GPIO_ToggleBits(GPIOC, GPIO_Pin_4);
+            // Delay(0xFFFF);
+            // Delay(0xFFFF);
+            // Delay(0xFFFF);
+            // Delay(0xFFFF);
+            // pressed = 0;
+        // }
+        
+
         {
-            GPIO_ToggleBits(GPIOC, GPIO_Pin_4);
+            printf("Test, %d\r\n", counter++);
+            //delay_ms(500);
             Delay(0xFFFF);
             Delay(0xFFFF);
             Delay(0xFFFF);
             Delay(0xFFFF);
-            pressed = 0;
         }
-        
-        
     }
+}
+
+void I2C_LowLevel_Init(void)
+{
+  /* Enable the peripheral Clock */
+  CLK->PCKENR1 |= (uint8_t)((uint8_t)1 << CLK_Peripheral_I2C1);
+}
+
+void UART_LowLevel_Init(void)
+{
+    /*!< USART1 Tx- Rx (PC3- PC2) remapping to PA2- PA3 */
+    SYSCFG->RMPCR1 &= (uint8_t)((uint8_t)((uint8_t)0x011C << 4) | (uint8_t)0x0F);
+    SYSCFG->RMPCR1 |= (uint8_t)((uint16_t)0x011C & (uint16_t)0x00F0);
+
+    /* Enable USART clock */
+    //CLK_PeripheralClockConfig(CLK_Peripheral_USART1, ENABLE);
+      /* Enable the peripheral Clock */
+    CLK->PCKENR1 |= (uint8_t)((uint8_t)1 << CLK_Peripheral_USART1);
+
+    /* Configure USART Tx as alternate function push-pull  (software pull up)*/
+    GPIO_ExternalPullUpConfig(GPIOA, GPIO_Pin_3, ENABLE);
+    //GPIOA->CR1 |= GPIO_Pin_3;
+
+    /* Configure USART Rx as alternate function push-pull  (software pull up)*/
+    GPIO_ExternalPullUpConfig(GPIOA, GPIO_Pin_2, ENABLE);
+    //GPIOA->CR1 |= GPIO_Pin_2;
 }
 
 INTERRUPT_HANDLER(EXTI1_IRQHandler, 9)

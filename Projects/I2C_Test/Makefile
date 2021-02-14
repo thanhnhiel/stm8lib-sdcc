@@ -22,7 +22,8 @@ LIBOBJS := $(LIBSRCS:$(LIBSRCDIR)/%.c=build/%.rel)
 
 LIB2SRCS := \
     $(LIBSRC2DIR)/i2c.c \
-    $(LIBSRC2DIR)/mpr121.c
+    $(LIBSRC2DIR)/mpr121.c \
+    $(LIBSRC2DIR)/uart.c
     
 LIB2OBJS := $(LIB2SRCS:$(LIBSRC2DIR)/%.c=build/%.rel)
 

@@ -2954,6 +2954,8 @@ AES_TypeDef;
  #define wfi()                 __asm__("wfi")    /* wait for interrupt */
  #define wfe()                 __asm__("wfe")    /* wait for event */
  #define halt()                __asm__("halt")   /* halt CPU */
+ #define _SFR_(mem_addr)       (*(volatile uint8_t *)(0x5000 | (mem_addr)))
+
 #else /*_IAR*/
  #include <intrinsics.h>
  #define enableInterrupts()    __enable_interrupt()   /* enable interrupts */

@@ -36,7 +36,7 @@
 //#include "stm8l15x_adc.h"
 //#include "stm8l15x_aes.h"
 //#include "stm8l15x_beep.h"
-//#include "stm8l15x_clk.h"
+#include "stm8l15x_clk.h"
 //#include "stm8l15x_comp.h"
 //#include "stm8l15x_dac.h"
 //#include "stm8l15x_dma.h"
@@ -58,7 +58,7 @@
 //#include "stm8l15x_tim3.h"
 //#include "stm8l15x_tim4.h"
 //#include "stm8l15x_tim5.h"
-//#include "stm8l15x_usart.h"
+#include "stm8l15x_usart.h"
 //#include "stm8l15x_wfe.h"
 //#include "stm8l15x_wwdg.h"
 
