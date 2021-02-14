@@ -1,4 +1,4 @@
-/* Includes ------------------------------------------------------------------*/
+    /* Includes ------------------------------------------------------------------*/
 #include "i2c.h"
 
 
@@ -65,7 +65,8 @@ void I2C_read_arr(uint8_t *buf, int len)
 
 //===========================================================
 // (MMA8452_ADDR << 1) + I2C_WRITE
-void I2C_write_reg(uint8_t address, uint8_t reg, uint8_t val) 
+
+void i2c_write_reg(uint8_t address, uint8_t reg, uint8_t val) 
 {
     I2C_start();
     I2C_write_addr(address);
@@ -74,7 +75,7 @@ void I2C_write_reg(uint8_t address, uint8_t reg, uint8_t val)
     I2C_stop();
 }
 
-uint8_t I2C_read_reg(uint8_t address, uint8_t reg) 
+uint8_t i2c_read_reg(uint8_t address, uint8_t reg) 
 {
     I2C_start();
     I2C_write_addr(address);
@@ -86,7 +87,7 @@ uint8_t I2C_read_reg(uint8_t address, uint8_t reg)
     return I2C_read();
 }
 
-void I2C_read_regs(uint8_t address, uint8_t reg, uint8_t *dest, uint8_t count) 
+void i2c_read_regs(uint8_t address, uint8_t reg, uint8_t *dest, uint8_t count) 
 {
     I2C_start();
     I2C_write_addr(address);

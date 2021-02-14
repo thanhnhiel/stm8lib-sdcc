@@ -27,7 +27,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm8l15x.h"
-#include "i2c.h"
+#include "mpr121.h"
 
 /** @addtogroup STM8L15x_StdPeriph_Examples
   * @{
@@ -50,11 +50,7 @@ INTERRUPT_HANDLER(EXTI1_IRQHandler, 9);
 __IO uint8_t pressed = 0;
 
 /* Private functions ---------------------------------------------------------*/
-/**
-  * @brief  Initializes the LM75_I2C..
-  * @param  None
-  * @retval None
-  */
+
 void I2C_LowLevel_Init(void)
 {
     //CLK_PeripheralClockConfig(CLK_Peripheral_I2C1, ENABLE);
@@ -72,28 +68,34 @@ void I2C_LowLevel_Init(void)
   */
 void main(void)
 {
-  /* Initialize LEDs mounted on STM8L152X-EVAL board */
-  GPIO_Init(GPIOC, GPIO_Pin_4, GPIO_Mode_Out_PP_Low_Fast);
-  
-  GPIO_Init(GPIOB, GPIO_Pin_1, GPIO_Mode_In_PU_IT);
-
-  //EXTI_SetPinSensitivity(EXTI_Pin_1, EXTI_Trigger_Falling);
-  EXTI->CR1 &=  (uint8_t)(~EXTI_CR1_P1IS);
-  EXTI->CR1 |= (uint8_t)((uint8_t)(EXTI_Trigger_Falling) << EXTI_Pin_1);
-  enableInterrupts();
-
-  while (1)
-  {
-    if (pressed == 1)
+    I2C_LowLevel_Init();
+    I2C_init();
+    mpr121_setup();
+    
+    /* Initialize LEDs mounted on STM8L152X-EVAL board */
+    GPIO_Init(GPIOC, GPIO_Pin_4, GPIO_Mode_Out_PP_Low_Fast);
+    
+    GPIO_Init(GPIOB, GPIO_Pin_1, GPIO_Mode_In_PU_IT);
+    
+    //EXTI_SetPinSensitivity(EXTI_Pin_1, EXTI_Trigger_Falling);
+    EXTI->CR1 &=  (uint8_t)(~EXTI_CR1_P1IS);
+    EXTI->CR1 |= (uint8_t)((uint8_t)(EXTI_Trigger_Falling) << EXTI_Pin_1);
+    enableInterrupts();
+    
+    while (1)
     {
-      GPIO_ToggleBits(GPIOC, GPIO_Pin_4);
-      Delay(0xFFFF);
-      Delay(0xFFFF);
-      Delay(0xFFFF);
-      Delay(0xFFFF);
-      pressed = 0;
+        if (pressed == 1 || (GPIOB->IDR & GPIO_Pin_1)==0)
+        {
+            GPIO_ToggleBits(GPIOC, GPIO_Pin_4);
+            Delay(0xFFFF);
+            Delay(0xFFFF);
+            Delay(0xFFFF);
+            Delay(0xFFFF);
+            pressed = 0;
+        }
+        
+        
     }
-  }
 }
 
 INTERRUPT_HANDLER(EXTI1_IRQHandler, 9)

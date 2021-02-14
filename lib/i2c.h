@@ -64,8 +64,8 @@ uint8_t I2C_read();
 void I2C_read_arr(uint8_t *buf, int len);
 
 
-void i2c_write_reg(uint8_t address, uint8_t reg, uint8_t val) ;
-uint8_t i2c_read_reg(uint8_t address, uint8_t reg) ;
+void I2C_write_reg(uint8_t address, uint8_t reg, uint8_t val) ;
+uint8_t I2C_read_reg(uint8_t address, uint8_t reg) ;
 void i2c_read_regs(uint8_t address, uint8_t reg, uint8_t *dest, uint8_t count);
 
 #endif /* __STM8L15x_IT_H */
