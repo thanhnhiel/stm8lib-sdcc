@@ -7,7 +7,9 @@
 
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
-#define _SFR_(mem_addr)       (*(volatile uint8_t *)(0x5000 | (mem_addr)))
+// #ifndef _SFR_
+// #define _SFR_(mem_addr)       (*(volatile uint8_t *)(0x5000 | (mem_addr)))
+// #endif
 
 /* I2C */
 #define I2C1_BASE_ADDRESS        (I2C1_BASE)
