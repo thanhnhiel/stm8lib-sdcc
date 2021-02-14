@@ -51,6 +51,8 @@ void I2C_LowLevel_Init(void);
 void UART_LowLevel_Init(void);
 void LM75_Init(void);
 
+uint8_t LM75_ReadTemp(uint16_t *val);
+
 void Delay (uint16_t nCount);
 INTERRUPT_HANDLER(EXTI1_IRQHandler, 9);
 __IO uint8_t pressed = 0;
@@ -70,6 +72,7 @@ void main(void)
     CLK->CKDIVR = (uint8_t)(CLK_SYSCLKDiv_8);
 
     LM75_Init();
+   
     UART_LowLevel_Init();
     uart_init();
 
@@ -85,6 +88,17 @@ void main(void)
     EXTI->CR1 &=  (uint8_t)(~EXTI_CR1_P1IS);
     EXTI->CR1 |= (uint8_t)((uint8_t)(EXTI_Trigger_Falling) << EXTI_Pin_1);
     //enableInterrupts();
+    
+    printf("LM75_ReadTemp...");
+    uint16_t t;
+    if (LM75_ReadTemp(&t) == 0) 
+    {
+      printf("Done\r\n");
+    }
+    else
+    {
+      printf("ERROR\r\n");
+    }
     
     while (1)
     {
@@ -116,9 +130,6 @@ void I2C_LowLevel_Init(void)
   //CLK->PCKENR1 |= (uint8_t)((uint8_t)1 << CLK_Peripheral_I2C1);
   CLK_PeripheralClockConfig(CLK_Peripheral_I2C1, ENABLE);
 
-  /* Configure SDA as alternate function push-pull  (software pull up)*/
-  GPIO_ExternalPullUpConfig(GPIOC, GPIO_Pin_0, ENABLE); // SCL
-  GPIO_ExternalPullUpConfig(GPIOC, GPIO_Pin_1, ENABLE); // SDA
 }
 
 #define LM75_I2C_SPEED      100000 /*!< I2C Speed */
@@ -186,6 +197,152 @@ void Delay(__IO uint16_t nCount)
   {
     nCount--;
   }
+}
+
+//=================
+
+#define I2C_TIMEOUT         (uint32_t)0x3FFFF /*!< I2C Time out */
+#define   LM75_ADDR           0x5A   /*!< LM75 address */
+#define	ELE_CFG	0x5E
+#define LM75_REG_TEMP        ELE_CFG  /* Temperature Register of LM75 */
+
+uint8_t LM75_ReadTemp(uint16_t *val)
+{
+  uint32_t I2C_TimeOut = I2C_TIMEOUT;
+  __IO uint16_t RegValue = 0;
+
+  /* Enable LM75_I2C acknowledgement if it is already disabled by other function */
+  I2C_AcknowledgeConfig(I2C1, ENABLE);
+
+  /*------------------------------------- Transmission Phase ------------------*/
+  /* Send LM75_I2C START condition */
+  I2C_GenerateSTART(I2C1, ENABLE);
+
+  /* Test on LM75_I2C EV5 and clear it */
+  while ((!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_MODE_SELECT)) && I2C_TimeOut)  /* EV5 */
+  {
+    I2C_TimeOut--;
+  }
+  
+  if (I2C_TimeOut == 0)
+  {
+    return 1;
+  }
+  
+  I2C_TimeOut = I2C_TIMEOUT;
+
+  /* Send STLM75 slave address for write */
+  I2C_Send7bitAddress(I2C1, LM75_ADDR, I2C_Direction_Transmitter);
+
+  /* Test on LM75_I2C EV6 and clear it */
+  while ((!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED)) && I2C_TimeOut)/* EV6 */
+  {
+    I2C_TimeOut--;
+  }
+  
+  if (I2C_TimeOut == 0)
+  {
+    return 1;
+  }
+
+  /* Send the temperature register data pointer */
+  I2C_SendData(I2C1, LM75_REG_TEMP);
+
+  I2C_TimeOut = I2C_TIMEOUT;
+  /* Test on LM75_I2C EV8 and clear it */
+  while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED)  && I2C_TimeOut) /* EV8 */
+  {
+        I2C_TimeOut--;
+  }
+  
+  if (I2C_TimeOut == 0)
+  {
+    return 1;
+  }
+
+  /* Send the temperature register data pointer */
+  I2C_SendData(I2C1, 0x00);
+
+  I2C_TimeOut = I2C_TIMEOUT;
+  /* Test on LM75_I2C EV8 and clear it */
+  while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED)  && I2C_TimeOut) /* EV8 */
+  {
+        I2C_TimeOut--;
+  }
+  
+  if (I2C_TimeOut == 0)
+  {
+    return 1;
+  }
+  #if 0
+  /*-------------------------------- Reception Phase --------------------------*/
+  /* Send Re-STRAT condition */
+  I2C_GenerateSTART(I2C1, ENABLE);
+
+I2C_TimeOut = I2C_TIMEOUT;
+  /* Test on EV5 and clear it */
+  while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_MODE_SELECT)  && I2C_TimeOut)  /* EV5 */
+  {
+    I2C_TimeOut--;
+  }
+   if (I2C_TimeOut == 0)
+  {
+    return 1;
+  }
+
+  /* Send STLM75 slave address for read */
+  I2C_Send7bitAddress(I2C1, LM75_ADDR, I2C_Direction_Receiver);
+
+I2C_TimeOut = I2C_TIMEOUT;
+  /* Test on EV6 and clear it */
+  while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED)  && I2C_TimeOut)  /* EV6 */
+  {
+       I2C_TimeOut--;
+  }
+    if (I2C_TimeOut == 0)
+  {
+    return 1;
+  }
+
+  I2C_TimeOut = I2C_TIMEOUT;
+  /* Test on EV7 and clear it */
+  while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_RECEIVED)  && I2C_TimeOut)  /* EV7 */
+  {
+        I2C_TimeOut--;
+  }
+    if (I2C_TimeOut == 0)
+  {
+    return 1;
+  }
+
+  /* Store LM75_I2C received data */
+  RegValue = I2C_ReceiveData(I2C1) << 8;
+
+  /* Disable LM75_I2C acknowledgement */
+  I2C_AcknowledgeConfig(I2C1, DISABLE);
+
+  /* Send LM75_I2C STOP Condition */
+  I2C_GenerateSTOP(I2C1, ENABLE);
+
+  I2C_TimeOut = I2C_TIMEOUT;
+  /* Test on RXNE flag */
+  while (I2C_GetFlagStatus(I2C1, I2C_FLAG_RXNE) == RESET  && I2C_TimeOut)
+  {
+        I2C_TimeOut--;
+  }
+    if (I2C_TimeOut == 0)
+  {
+    return 1;
+  }
+
+  /* Store LM75_I2C received data */
+  RegValue |= I2C_ReceiveData(I2C1);
+
+  /* Return Temperature value */
+  *val = (RegValue >> 7);
+  #endif
+  
+  return 0;
 }
 
 #ifdef  USE_FULL_ASSERT
