@@ -30,7 +30,7 @@ LIB2OBJS := $(LIB2SRCS:$(LIBSRC2DIR)/%.c=build/%.rel)
 
 SRCS:= main.c
 
-OBJS     = $(LIBOBJS)  $(SRCS:%.c=build/%.rel)
+OBJS     = $(LIBOBJS) $(LIB2OBJS)  $(SRCS:%.c=build/%.rel)
 
 CC       = sdcc
 LD       = sdld
